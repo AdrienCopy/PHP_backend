@@ -12,6 +12,7 @@ $router = new Router();
 // Define routes
 $router->addRoute('GET', '/posts/{apiKey}', [new Controller(), 'posts']);
 $router->addRoute('GET', '/post/{apiKey}/{id}', [new Controller(), 'postId']);
+$router->addRoute('GET', '/posts/{apiKey}/{page}/{limit}', [new Controller(), 'postsPage']);
 $router->addRoute('POST', '/post/{apiKey}', [new Controller(), 'createPost']);
 $router->addRoute('PUT', '/post/{apiKey}/{id}', [new Controller(), 'updater']);
 $router->addRoute('DELETE', '/post/{apiKey}/{id}', [new Controller(), 'delete']);
@@ -32,7 +33,7 @@ $router->addRoute('GET', '/API/{apiKey}', function($apiKey) {
 
 
 //test
-$router->addRoute('GET', '/posts/{apiKey}/{page}/{limit}', [new Controller(), 'postsPage']);
+$router->addRoute('POST', '/new-user', [new ControllerKey(), 'newUser']);
 
 
 

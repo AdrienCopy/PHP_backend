@@ -5,18 +5,21 @@ declare(strict_types=1);
 require_once './config/DataBaseManager.php';
 require_once './models/Post.php';
 require_once './models/ApiKey.php';
+require_once './models/Response.php';
 
 class ControllerKey {
     private $dbManager;
+    private $responseObject;
 
     public function __construct() 
     {
         $this->dbManager = new DatabaseManager();
+        $this->responseObject = new Response();
     }
 
-    public function generate($length = 64) {
+    public function generate($length = 32) {
         $apiKey = bin2hex(random_bytes($length / 2));
-        echo $apiKey;
+        return $apiKey;
     }
     private function json($response)
     {
@@ -77,8 +80,10 @@ class ControllerKey {
                         $user['api_key'],
                         $user['created_at']
                     );
+                    
                     $apiKey = $this->json($apiKey);
                     print_r($apiKey);
+                    
                     
                 } else {
                     echo 'Invalid username or password';
@@ -89,6 +94,51 @@ class ControllerKey {
 
         } catch (PDOException $e) {
             echo 'Erreur de requête : ' . $e->getMessage();
+        }
+    }
+
+    public function newUser()
+    {
+        return $this->getNewUser();
+    }
+
+    private function getNewUser() 
+    {
+        try {
+            $bdd = $this->dbManager->getConnection();
+
+            if (isset($_POST['username']) && isset($_POST['password'])) {
+                
+                $username = htmlspecialchars(trim($_POST['username']));
+                $password = htmlspecialchars(trim($_POST['password']));
+                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+                $apiKey = $this->generate();
+                
+                $query = 'INSERT INTO users (username, password, api_key, created_at) 
+                        VALUES (:username, :password, :api_key, NOW())';
+                $result = $bdd->prepare($query);
+                $result->bindParam(':username', $username, PDO::PARAM_STR);
+                $result->bindParam(':password', $hashedPassword, PDO::PARAM_STR);
+                $result->bindParam(':api_key', $apiKey, PDO::PARAM_STR);
+                $result->execute();
+                
+                echo $this->json($this->responseObject->Response('401', 'User created successfully'));
+
+            } else {
+                echo 'Username and password are required';
+            }
+            
+            
+        } catch (PDOException $e) {
+            return $this->json([
+                'status' => 500,
+                'message' => 'Database error: ' . $e->getMessage()
+            ]);
+        } catch (Exception $e) {
+            return $this->json([
+                'status' => 400,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
         }
     }
 }
